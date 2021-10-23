@@ -3,8 +3,8 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext, filters
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from keyboards import reply_keyboars_list
-
 from database import *
+import datetime
 
 #___Сострояние "Создать событие"___
 class FSMCreateEvent(StatesGroup):
@@ -15,12 +15,12 @@ class FSMCreateEvent(StatesGroup):
 	endDate = State()
 
 #Начало создания нового события
-async def FSMCreateEventStart(message : types.Message):
+async def fsm_Create_Event_Start(message : types.Message):
 	await FSMCreateEvent.nameEvent.set()
 	await message.reply("Введите имя события:", reply_markup=reply_keyboars_list["cencel_event"])
 
 #Получаем ответ от пользователя
-async def FSMNameEvent(message: types.Message, state: FSMContext):
+async def fsm_Name_Event(message: types.Message, state: FSMContext):
 	async with state.proxy() as data:
 		data["nameEvent"] = message.text
 
@@ -28,7 +28,7 @@ async def FSMNameEvent(message: types.Message, state: FSMContext):
 	await message.reply("Введите заголовок события\n(Можете использовать HTML разметку):")
 
 #Получаем второй ответ от пользователя
-async def FSMtitle(message: types.Message, state: FSMContext):
+async def fsm_title(message: types.Message, state: FSMContext):
 	async with state.proxy() as data:
 		data["title"] = message.text
 
@@ -36,7 +36,7 @@ async def FSMtitle(message: types.Message, state: FSMContext):
 	await message.reply("Введите описание\n(Можете использовать HTML разметку):")
 
 #Получаем третий ответ от пользователя
-async def FSMdescription(message: types.Message, state: FSMContext):
+async def fsm_description(message: types.Message, state: FSMContext):
 	async with state.proxy() as data:
 		data["description"] = message.text
 
@@ -44,7 +44,7 @@ async def FSMdescription(message: types.Message, state: FSMContext):
 	await message.reply("Пришлите медиа\n(Картинка, Анимация, Видео, Аудио):")
 
 #Получаем 4 ответ от пользователя
-async def FSMmedia(message: types.Message, state: FSMContext):
+async def fsm_media(message: types.Message, state: FSMContext):
 	async with state.proxy() as data:
 		
 		if message.photo:
@@ -56,12 +56,18 @@ async def FSMmedia(message: types.Message, state: FSMContext):
 		elif message.audio:
 			data["media"] = ("audio", message.audio.file_id)
 
-
 	await FSMCreateEvent.next()
-	await message.reply("Дата окончания:")
+	await message.reply("Дата окончания\nПришлите дату в формате d.m.y(например 23.10.2021):")
 
 #Получаем 5 ответ от пользователя
-async def FSMendDate(message: types.Message, state: FSMContext):
+async def fsm_endDate(message: types.Message, state: FSMContext):
+
+	try:
+		datetime.datetime.strptime(message.text, "%d.%m.%Y")
+	except Exception as e:
+		print(e)
+		await message.reply("Неверный формат даты\nПришлите дату в формате d.m.y\n(например 23.10.2021):")
+		return
 
 	async with state.proxy() as data:
 		data["endDate"] = message.text
@@ -78,10 +84,7 @@ async def FSMendDate(message: types.Message, state: FSMContext):
 	elif data["media"][0] == "audio": 
 		await bot.send_audio(chat_id = message.chat.id, audio = data["media"][1], caption = text, reply_markup=reply_keyboars_list["start"])	
 
-	
 	await state.finish()
-	
-
 
 #Отменить создание события
 async def cancel_handler(message: types.Message, state: FSMContext) :
@@ -95,12 +98,11 @@ async def cancel_handler(message: types.Message, state: FSMContext) :
 
 #___end___
 
-
 def FSM_create_event_register_handlers(dp: Dispatcher):
 	dp.register_message_handler(cancel_handler, filters.Text(equals="❌ Отменить операцию", ignore_case=True), state="*")
-	dp.register_message_handler(FSMCreateEventStart, filters.Text(contains=["Добавить событие"], ignore_case=True), state=None)
-	dp.register_message_handler(FSMNameEvent, state=FSMCreateEvent.nameEvent)
-	dp.register_message_handler(FSMtitle, state=FSMCreateEvent.title)
-	dp.register_message_handler(FSMdescription, state=FSMCreateEvent.description)
-	dp.register_message_handler(FSMmedia, content_types=["photo", "video", "audio", "animation"], state=FSMCreateEvent.media)
-	dp.register_message_handler(FSMendDate, state=FSMCreateEvent.endDate)
+	dp.register_message_handler(fsm_Create_Event_Start, filters.Text(contains=["Добавить событие"], ignore_case=True), state=None)
+	dp.register_message_handler(fsm_Name_Event, state=FSMCreateEvent.nameEvent)
+	dp.register_message_handler(fsm_title, state=FSMCreateEvent.title)
+	dp.register_message_handler(fsm_description, state=FSMCreateEvent.description)
+	dp.register_message_handler(fsm_media, content_types=["photo", "video", "audio", "animation"], state=FSMCreateEvent.media)
+	dp.register_message_handler(fsm_endDate, state=FSMCreateEvent.endDate)

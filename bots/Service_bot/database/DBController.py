@@ -5,7 +5,6 @@ from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 
 #Подключение к БД
 class DBConnect(object):
-	
 	def __init__(self):
 		super(DBConnect, self).__init__()
 		self.DATABASE_NAME = 'database.db'
@@ -13,7 +12,6 @@ class DBConnect(object):
 		self.Session = sessionmaker(bind=self.engine)
 		self.Base = declarative_base()
 		self.session = None
-
 
 	def start_db(self):
 		self.Base.metadata.create_all(self.engine)
@@ -35,7 +33,6 @@ class User(DB.Base):
     in_service_bot = Column(Boolean)
     with_chat = Column(Integer)
     
-
     def __init__(self, chat_id: int, name: str, username: str, in_client_bot: bool, in_service_bot: bool, with_chat: int):
         self.chat_id = chat_id
         self.name = name
@@ -57,8 +54,6 @@ class Event(DB.Base):
 	media = Column(String)
 	endDate = Column(String)
 
-    
-
 	def __init__(self, user_id: int, nameEvent: str, title: str, description: str, media_type: str, media: str, endDate: str):
 		self.user_id = user_id
 		self.nameEvent = nameEvent
@@ -77,7 +72,6 @@ class DBController(object):
 		self.DB = DB
 		self.DB.Base.metadata.create_all(self.DB.engine)
 		self.session = self.DB.Session()
-
 
 	#Добавить ползователя в БД
 	async def addUser(self, user: User): 

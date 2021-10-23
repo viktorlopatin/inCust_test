@@ -2,10 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
-
+import datetime
 #Подключение к БД
 class DBConnect(object):
-	
 	def __init__(self):
 		super(DBConnect, self).__init__()
 		self.DATABASE_NAME = 'database.db'
@@ -13,7 +12,6 @@ class DBConnect(object):
 		self.Session = sessionmaker(bind=self.engine)
 		self.Base = declarative_base()
 		self.session = None
-
 
 	def start_db(self):
 		self.Base.metadata.create_all(self.engine)
@@ -35,7 +33,6 @@ class User(DB.Base):
     in_service_bot = Column(Boolean)
     with_chat = Column(Integer)
     
-
     def __init__(self, chat_id: int, name: str, username: str, in_client_bot: bool, in_service_bot: bool, with_chat: int):
         self.chat_id = chat_id
         self.name = name
@@ -55,9 +52,7 @@ class Event(DB.Base):
 	description = Column(String)
 	media_type = Column(String)
 	media = Column(String)
-	endDate = Column(String)
-
-    
+	endDate = Column(String) 
 
 	def __init__(self, user_id: int, nameEvent: str, title: str, description: str, media_type: str, media: str, endDate: str):
 		self.user_id = user_id
@@ -68,7 +63,6 @@ class Event(DB.Base):
 		self.media = media
 		self.endDate = endDate
 
-		
 #Работа с запросами к БД
 class DBController(object):
 	"""docstring for DBController"""
@@ -77,7 +71,6 @@ class DBController(object):
 		self.DB = DB
 		self.DB.Base.metadata.create_all(self.DB.engine)
 		self.session = self.DB.Session()
-
 
 	#Добавить ползователя в БД
 	async def addUser(self, user: User): 
@@ -98,7 +91,8 @@ class DBController(object):
 		self.session.commit()
 
 	async def getEvents(self):
-		Events = list(reversed([x for x in self.session.query(Event).all()]))
+		date = datetime.datetime.now()
+		Events = list(reversed([x for x in self.session.query(Event).all() if date <= datetime.datetime.strptime(x.endDate, "%d.%m.%Y")]))
 		print(Events)
 		return Events
 
@@ -117,4 +111,5 @@ class DBController(object):
 		self.session.commit()
 
 db = DBController()
+
 
