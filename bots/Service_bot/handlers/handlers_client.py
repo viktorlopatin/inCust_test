@@ -85,7 +85,7 @@ async def cancel_chat_hundler(message: types.Message, state: FSMchat.chat) :
 
 def register_handlers(dp: Dispatcher):
 	dp.register_message_handler(start_handler, commands=["start"], state="*")
-	dp.register_callback_query_handler(chat_hundler, filters.Text(startswith="0"), state=None)
+	dp.register_callback_query_handler(chat_hundler, filters.Text(startswith="0"), state="*")
 	dp.register_message_handler(cancel_chat_hundler, filters.Text(contains=["❌Выйти из чата"]), state=FSMchat.chat)
 	dp.register_message_handler(send_message_chat_hundler, content_types=["text", "photo", "video", "audio", "animation"], state=FSMchat.chat)
 	

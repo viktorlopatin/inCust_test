@@ -15,7 +15,7 @@ class FSMCatalog(StatesGroup):
 class FSMchat(StatesGroup):
 	chat = State()
 
-async def send_message_with_media(message, event, with_button = True):
+async def send_message_with_media(message, event, with_button = True, reply_markup = None):
 	if str(event.user_id) == str(message.chat.id):
 		dutton_text = "Удалить"
 		button_data = f"1.{str(event.id)}.{str(event.user_id)}.{str(message.chat.id)}"
@@ -28,6 +28,10 @@ async def send_message_with_media(message, event, with_button = True):
 		inline_kb1 = InlineKeyboardMarkup().add(InlineKeyboardButton(dutton_text, callback_data=button_data))
 	else:
 		inline_kb1 = None
+
+	print(reply_markup)
+	if reply_markup != None:
+		inline_kb1 = reply_markup
 
 	text = event.title + "\n\n" + event.description
 	if event.media_type == "photo": 
@@ -77,6 +81,9 @@ async def catalog_handler_2_or_5(message : types.Message, state: FSMCatalog.name
 				if x + data["iter"] < len(data["events"]):
 					await send_message_with_media(message, data["events"][x + data["iter"]])
 					if_send = True
+
+		if if_send:
+			data["iter"] += int(message.text[1:])
 
 	if if_send == False:
 		await message.answer("Событий больше нет")
@@ -189,8 +196,9 @@ def register_handlers_catalog(dp: Dispatcher):
 	#Отменить удаление события
 	dp.register_callback_query_handler(delete_event, filters.Text(startswith="3"), state=FSMCatalog.nameEvent)
 
-	dp.register_callback_query_handler(chat_hundler, filters.Text(startswith="2"), state=None)
-	dp.register_callback_query_handler(chat_hundler, filters.Text(startswith="2"), state=FSMCatalog.nameEvent)
+	dp.register_callback_query_handler(chat_hundler, filters.Text(startswith="2"), state="*")
+	
+
 	dp.register_callback_query_handler(show_event_hundler_button, filters.Text(startswith="5"), state="*")
 	dp.register_message_handler(show_event_hundler, filters.Text(contains=["Посмотреть событие"]), state=FSMchat.chat)
 	dp.register_message_handler(cancel_chat_hundler, filters.Text(contains=["❌Выйти из чата"]), state=FSMchat.chat)
